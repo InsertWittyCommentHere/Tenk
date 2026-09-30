@@ -1,0 +1,17 @@
+# Cognizant Technology Solutions — Phase 6 genericity proof (US filer, us-gaap, Dec FY).
+ticker: CTSH
+cik: 1058290
+name: Cognizant Technology Solutions Corp
+exchange: NASDAQ
+currency: USD
+fiscal_year_end: "1231"
+peers:
+  - ACN
+  - IBM
+  - INFY
+  - WIT
+  - DXC
+concept_overrides: {}
+notes: >
+  Direct IT-services peer to Accenture; calendar fiscal year (vs ACN's Aug 31).
+  Onboarding CTSH validates that a company is a config row, not a code change.

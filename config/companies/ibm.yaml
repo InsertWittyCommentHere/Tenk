@@ -1,0 +1,15 @@
+# IBM — large-cap IT services/software/infrastructure peer (US filer, Dec FY).
+ticker: IBM
+cik: 51143
+name: International Business Machines Corp
+exchange: NYSE
+currency: USD
+fiscal_year_end: "1231"
+peers:
+  - ACN
+  - CTSH
+  - DXC
+concept_overrides: {}
+notes: >
+  Software-heavy mix (higher gross margin than pure services). Consulting segment
+  overlaps Accenture. Useful as a contrasting large-cap in the watchlist.

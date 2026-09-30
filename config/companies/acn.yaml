@@ -1,0 +1,21 @@
+# Accenture plc — the seeded first company.
+# Accenture is Irish-domiciled, reports in USD, fiscal year ends Aug 31.
+ticker: ACN
+cik: 1467373
+name: Accenture plc
+exchange: NYSE
+currency: USD
+fiscal_year_end: "0831"
+# Peer set for relative valuation (IT services / consulting). See DESIGN.md §2.3.
+peers:
+  - IBM    # IBM (Consulting segment overlap)
+  - CTSH   # Cognizant
+  - INFY   # Infosys (ADR)
+  - WIT    # Wipro (ADR)
+  - DXC    # DXC Technology
+  - CAP.PA # Capgemini (Euronext Paris) — non-US filer, needs alt source later
+concept_overrides: {}
+notes: >
+  Accenture files a 10-K (annual) and 10-Q (quarterly). Watch the GAAP vs
+  non-GAAP bridge in IR releases and book-to-bill / new bookings, which are a
+  key forward indicator for ACN and are disclosed in press releases, not XBRL.
