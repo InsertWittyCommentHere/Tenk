@@ -54,6 +54,33 @@ Companies are config rows in `config/companies/` (ACN, CTSH, IBM seeded). Add on
 `uv run equity ingest <TICKER>`. Set `EQR_REFRESH_INTERVAL=3600` before `serve` to enable
 background alert refresh.
 
+## Live demo (free static hosting)
+
+The public demo is a **read-only snapshot**: `equity export` calls every dashboard
+endpoint in-process and writes the JSON next to a static copy of the dashboard, so
+any static host can serve it. Refresh, acknowledgements and live chat are disabled
+there; the Chat tab shows saved example analyses instead.
+
+```bash
+uv run equity export --out site                 # build the static site locally
+python -m http.server -d site 8000              # preview at http://127.0.0.1:8000
+uv run equity research ACN "Is ACN's growth durable?" --verify --save
+                                                # save an example answer (uses your API key once);
+                                                # commit showcase/research/ and export includes it
+```
+
+`.github/workflows/publish-demo.yml` rebuilds the snapshot every weekday
+(ingest → refresh → test → export) and pushes it to the `deploy` branch. Setup:
+
+1. Add a repo secret `EQR_SEC_USER_AGENT` (e.g. `Tenk demo you@example.com`).
+2. Settings → Actions → General → Workflow permissions → **Read and write**.
+3. Actions → *Publish demo snapshot* → **Run workflow** once.
+4. Vercel → Add New Project → import this repo → Framework **Other**, no build
+   command, output directory `.` → Settings → Git → Production Branch **`deploy`**.
+   (Or GitHub Pages: Settings → Pages → deploy from branch `deploy`.)
+
+No API key is ever deployed, so the demo costs nothing to run.
+
 ## Architecture in one breath
 
 ```

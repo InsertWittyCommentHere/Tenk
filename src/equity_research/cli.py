@@ -323,12 +323,37 @@ def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
 
 
 @app.command()
+def export(
+    out: str = typer.Option("site", help="Output folder for the static site."),
+    comps: bool = typer.Option(True, help="Include live peer comps (slow; hits EDGAR)."),
+) -> None:
+    """Export a read-only static snapshot of the dashboard (for Vercel / GitHub Pages)."""
+    from pathlib import Path
+
+    from equity_research.export import export_site
+
+    s = export_site(Path(out), with_comps=comps)
+    console.print(
+        f"[green]Exported[/] {s.files} files for {', '.join(s.companies) or 'no companies'} "
+        f"→ {s.out_dir}/"
+    )
+    for rel, why in s.skipped.items():
+        console.print(f"[yellow]  skipped {rel}: {why}[/]")
+    if not s.companies:
+        console.print("[red]No company data exported — run `equity ingest <TICKER>` first.[/]")
+        raise typer.Exit(code=1)
+
+
+@app.command()
 def research(
     ticker: str,
     question: str,
     model: str = typer.Option("claude-opus-4-8", help="Claude model id."),
     effort: str = typer.Option("high", help="Reasoning effort: low|medium|high|max."),
     verify: bool = typer.Option(False, help="Run the Critic/red-team review of the answer."),
+    save: bool = typer.Option(
+        False, help="Save the answer to showcase/research/ so `equity export` includes it."
+    ),
 ) -> None:
     """Ask the Supervisor agent a research question (citation-backed). Needs ANTHROPIC_API_KEY."""
     import os
@@ -372,6 +397,26 @@ def research(
     if result.critique:
         console.print(f"\n[bold]Critic verdict: {result.critique.verdict}[/]")
         console.print(result.critique.critique)
+
+    if save:
+        from datetime import date
+
+        from equity_research.export import save_research
+
+        path = save_research(company.ticker, {
+            "question": question,
+            "answer": result.answer,
+            "model": model,
+            "asked_on": date.today().isoformat(),
+            "citation_coverage": (
+                result.citation_report.coverage if result.citation_report else None
+            ),
+            "critique": (
+                {"verdict": result.critique.verdict, "text": result.critique.critique}
+                if result.critique else None
+            ),
+        })
+        console.print(f"\n[green]Saved to {path}[/] (commit it; `equity export` will include it)")
 
 
 @app.command()

@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     # SEC requires a descriptive UA with contact email. Override via EQR_SEC_USER_AGENT.
     sec_user_agent: str = Field(
-        default="Equity Research (personal) riyanpjain@gmail.com",
+        default="Equity Research (personal) rjain1@imsa.edu",
         description="User-Agent sent to SEC EDGAR; must include a contact email.",
     )
     data_dir: Path = DATA_DIR
