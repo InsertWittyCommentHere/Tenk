@@ -9,6 +9,7 @@ dist/
 # Local data + secrets
 .env
 data/
+site/
 *.db
 *.db-wal
 *.db-shm

@@ -1,0 +1,85 @@
+# Publishes a read-only static snapshot of the Tenk dashboard.
+#
+# Daily: ingest SEC EDGAR for every company in config/companies/, recompute alerts,
+# run the tests, export the dashboard as static files, and push them to the
+# `deploy` branch. Vercel (or GitHub Pages) serves that branch; no server, no cost.
+#
+# One-time setup (see README → "Live demo"):
+#   1. Repo secret EQR_SEC_USER_AGENT, e.g. "Tenk demo you@example.com" (SEC requires a contact).
+#   2. Settings → Actions → General → Workflow permissions: "Read and write".
+#   3. Run this workflow once by hand, then point Vercel at the `deploy` branch.
+
+name: Publish demo snapshot
+
+on:
+  schedule:
+    - cron: "17 11 * * 1-5" # weekdays ~06:17 US Central, after the overnight EDGAR updates
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["src/**", "config/**", "showcase/**", "pyproject.toml", "uv.lock"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-demo
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EQR_SEC_USER_AGENT: ${{ secrets.EQR_SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      # Persist the SQLite DBs + EDGAR cache between runs, so ingests are incremental
+      # and alert change-detection ("only NEW alerts") works across days.
+      - name: Restore data/
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: tenk-data-${{ github.run_id }}
+          restore-keys: tenk-data-
+
+      - name: Install
+        run: uv sync --frozen --extra dev
+
+      - name: Check SEC contact is set
+        run: |
+          if [ -z "$EQR_SEC_USER_AGENT" ]; then
+            echo "::error::Add the EQR_SEC_USER_AGENT repository secret (SEC requires a contact email)."
+            exit 1
+          fi
+
+      - name: Ingest SEC EDGAR
+        run: |
+          for f in config/companies/*.yaml; do
+            uv run equity ingest "$(basename "$f" .yaml)"
+          done
+
+      - name: Recompute alerts
+        run: uv run equity refresh
+
+      - name: Test
+        run: uv run pytest
+
+      - name: Export static site
+        run: uv run equity export --out site
+
+      - name: Publish to deploy branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: deploy
+          force_orphan: true # keep the deploy branch to one commit; main history stays clean
+          user_name: github-actions[bot]
+          user_email: 41898299+github-actions[bot]@users.noreply.github.com
+          commit_message: "Demo snapshot"
